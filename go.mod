@@ -1,9 +1,9 @@
-module github.com/HnH/app
+module github.com/HnH/onion
 
 go 1.17
 
 require (
-	github.com/HnH/di v1.2.2
+	github.com/HnH/di v1.2.3
 	github.com/rs/zerolog v1.25.0
 )
 
@@ -14,5 +14,3 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
-
-replace github.com/HnH/di => /home/sergey/projects/opensource/di

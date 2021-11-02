@@ -1,4 +1,4 @@
-package app
+package onion
 
 import (
 	"context"
@@ -15,15 +15,11 @@ type Application interface {
 	Listen() error
 }
 
-// Config interface
-type Config interface {
-	Register(di.Container) error
-}
-
 // New creates new application
 func New(ctx context.Context, options ...Option) Application {
 	var app = &application{
-		context: ctx,
+		context:    ctx,
+		chanSignal: make(chan os.Signal, 1),
 	}
 
 	for _, opt := range options {
@@ -34,11 +30,12 @@ func New(ctx context.Context, options ...Option) Application {
 }
 
 type application struct {
-	context   context.Context
-	container di.Container
-	logger    zerolog.Logger
-	config    Config
-	layers    layers
+	context    context.Context
+	container  di.Container
+	logger     zerolog.Logger
+	providers  []di.Provider
+	layers     layers
+	chanSignal chan os.Signal
 }
 
 // SetContainer sets container for Application
@@ -51,9 +48,9 @@ func (self *application) SetLogger(log zerolog.Logger) {
 	self.logger = log
 }
 
-// SetConfig sets Config for Application
-func (self *application) SetConfig(cfg Config) {
-	self.config = cfg
+// SetProviders sets providers for di.Container
+func (self *application) SetProviders(providers ...di.Provider) {
+	self.providers = providers
 }
 
 // SetLayers sets layers for Application
@@ -66,10 +63,10 @@ func (self *application) init() (err error) {
 		self.container = di.NewContainer()
 	}
 
-	self.context = di.CtxWith(self.context, self.container).Raw()
+	self.context = di.Ctx(self.context).SetContainer(self.container).Raw()
 
-	if self.config != nil {
-		if err = self.config.Register(self.container); err != nil {
+	for _, p := range self.providers {
+		if err = p.Provide(self.container); err != nil {
 			return
 		}
 	}
@@ -89,18 +86,17 @@ func (self *application) Listen() (err error) {
 
 	self.logger.Info().Msg("application instance started")
 
-	var chanSignal = make(chan os.Signal, 1)
-	signal.Notify(chanSignal, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(self.chanSignal, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
-	for sig := range chanSignal {
+	for sig := range self.chanSignal {
 		self.logger.Info().Str("SIGNAL", sig.String()).Msg("process termination signal received")
 
 		if err := self.layers.shutdown(self.context); err != nil {
 			self.logger.Error().Err(err)
 		}
 
-		signal.Stop(chanSignal)
-		close(chanSignal)
+		signal.Stop(self.chanSignal)
+		close(self.chanSignal)
 	}
 
 	self.logger.Info().Msg("application instance terminated")
