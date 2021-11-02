@@ -1,4 +1,4 @@
-package app
+package onion
 
 import (
 	"github.com/HnH/di"
@@ -12,7 +12,7 @@ type Option func(Options)
 type Options interface {
 	SetContainer(di.Container)
 	SetLogger(zerolog.Logger)
-	SetConfig(Config)
+	SetProviders(...di.Provider)
 	SetLayers(...Layer)
 }
 
@@ -30,10 +30,10 @@ func WithLogger(log zerolog.Logger) Option {
 	}
 }
 
-// WithConfig creates a config Option
-func WithConfig(cfg Config) Option {
+// WithProviders creates a providers Option
+func WithProviders(providers ...di.Provider) Option {
 	return func(o Options) {
-		o.SetConfig(cfg)
+		o.SetProviders(providers...)
 	}
 }
 
