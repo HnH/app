@@ -11,6 +11,10 @@ import (
 // Layer is an Application layer abstraction
 type Layer interface {
 	Initialize(context.Context) error
+}
+
+// Shutdowner is a layer that has his state shutdown logic
+type Shutdowner interface {
 	Shutdown() <-chan error
 }
 
@@ -28,6 +32,12 @@ func (lrs layers) initialize(ctx context.Context) (err error) {
 	for _, l := range lrs {
 		if err = l.Initialize(ctx); err != nil {
 			return
+		}
+
+		if t, ok := l.(di.Provider); ok {
+			if err = t.Provide(di.Ctx(ctx).Container()); err != nil {
+				return
+			}
 		}
 
 		log.Info().Msgf("%s layer initialized", reflect.TypeOf(l).String())
@@ -48,9 +58,11 @@ func (lrs layers) shutdown(ctx context.Context) (err error) {
 
 	// Loop and close layers in reversed order
 	for n := len(lrs) - 1; n >= 0; n-- {
-		for err = range lrs[n].Shutdown() {
-			if err != nil {
-				log.Error().Err(err).Send()
+		if t, ok := lrs[n].(Shutdowner); ok {
+			for err = range t.Shutdown() {
+				if err != nil {
+					log.Error().Err(err).Send()
+				}
 			}
 		}
 

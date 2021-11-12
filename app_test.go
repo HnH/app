@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/HnH/di"
-	"github.com/HnH/onion/internal/mocks"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
+
+	"pgw.dev/lib/onion/internal/mocks"
 )
 
 func TestApplicationSuite(t *testing.T) {
