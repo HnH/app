@@ -1,4 +1,4 @@
-module github.com/HnH/onion
+module pgw.dev/lib/onion
 
 go 1.17
 
