@@ -3,13 +3,14 @@ package onion
 import (
 	"context"
 	"os"
+	"syscall"
 	"testing"
 
 	"github.com/HnH/di"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 
-	"pgw.dev/lib/onion/internal/mocks"
+	"github.com/HnH/onion/internal/mocks"
 )
 
 func TestApplicationSuite(t *testing.T) {
@@ -64,7 +65,7 @@ func (suite *ApplicationSuite) TestListen() {
 		}
 	}()
 
-	app.chanSignal <- os.Interrupt
+	app.chanSignal <- syscall.SIGINT
 
 	var out, ok = <-chanErrors
 	suite.Require().NoError(out)
