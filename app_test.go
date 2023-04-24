@@ -66,6 +66,7 @@ func (suite *ApplicationSuite) TestListen() {
 	}()
 
 	app.chanSignal <- syscall.SIGINT
+	app.chanSignal <- syscall.SIGINT
 
 	var out, ok = <-chanErrors
 	suite.Require().NoError(out)
