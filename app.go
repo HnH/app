@@ -89,13 +89,14 @@ func (self *application) Listen() (err error) {
 	signal.Notify(self.chanSignal, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	var sig = <-self.chanSignal
-	signal.Stop(self.chanSignal)
 
 	self.logger.Info().Str("SIGNAL", sig.String()).Msg("process termination signal received")
 
 	if err := self.layers.shutdown(self.context); err != nil {
 		self.logger.Error().Err(err)
 	}
+
+	signal.Stop(self.chanSignal)
 
 	self.logger.Info().Msg("application instance terminated")
 

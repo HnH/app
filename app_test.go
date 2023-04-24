@@ -5,6 +5,7 @@ import (
 	"os"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/HnH/di"
 	"github.com/rs/zerolog"
@@ -65,8 +66,10 @@ func (suite *ApplicationSuite) TestListen() {
 		}
 	}()
 
-	app.chanSignal <- syscall.SIGINT
-	app.chanSignal <- syscall.SIGINT
+	time.Sleep(500 * time.Millisecond) // ensure that application subscribed signals
+	suite.Require().NoError(syscall.Kill(syscall.Getpid(), syscall.SIGINT))
+	suite.Require().NoError(syscall.Kill(syscall.Getpid(), syscall.SIGINT))
+	suite.Require().NoError(syscall.Kill(syscall.Getpid(), syscall.SIGINT))
 
 	var out, ok = <-chanErrors
 	suite.Require().NoError(out)
